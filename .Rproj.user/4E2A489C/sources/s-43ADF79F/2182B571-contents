@@ -1,0 +1,23 @@
+source("R/varpart.R")
+
+load("data.RData")
+
+# predictor groups
+preds.hetero <- c("X4_stdev_B3","X4_stdev_B5","X4_ndvi_stdev","X4_mndwi_stdev","X7_stdev_B3","X7_stdev_B5","X7_ndvi_stdev","X7_mndwi_stdev")
+preds.median <- c("X4_median_B3","X4_median_B5","X4_ndvi_median","X4_mndwi_median","X7_median_B3","X7_median_B5","X7_ndvi_median","X7_mndwi_median")
+preds.corine <- c("urban","coniferous","leaves.and.mixed","open.vegetation","agro","pastures.and.heterogneous","water","npatch.x","nclass.x","larea.x","npatch.y","nclass.y","larea.y")
+
+# model with unclassified predictors  
+formula.uncl <- paste("count~", 
+                      paste(preds.hetero, collapse = "+"),
+                      "+",
+                      paste(preds.median, collapse = "+"),
+                      "+samp_eff",
+                      sep="")
+m <- glm(formula.uncl, family = "poisson", data=data_v) %>% step(trace=F)
+summary(m)
+
+rsq(m)
+dev.expl(m, preds.hetero)
+parts <- devpart(m, A=preds.hetero, B=preds.median, C="samp_eff")
+venns <- get_venns(parts)

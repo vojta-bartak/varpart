@@ -300,30 +300,29 @@ get_venns <- function(parts, method=c("eulerr", "mc", "polygons", "venneuler"), 
   orig_parts[orig_parts < 0] <- 0
   if (!is.null(min_share)) parts[parts < min_share] <- min_share
 
-  venns <- case_when(
-    method == "mc" ~ get_venns_2p(parts, npoints=npoints),
-    method == "polygons" ~ get_venns_slow(parts, "polygons"),
-    method == "venneuler" ~ {
-      require(venneuler)
-      combs <- lapply(1:3, function(i)
-        combn(1:3, i) %>%
-          apply(2, function(col) paste(col, collapse = "&"))
-      ) %>% unlist
-      v <- venneuler(combs, parts[1:7])
-      list(parts = parts,
-           pars = c(v$centers %>% apply(1, function(i) list(i)) %>% unlist, v$diameters/2))
-    },
-    method == "eulerr" ~ {
-      require(eulerr)
-      combs <- lapply(1:3, function(i)
-        combn(1:3, i) %>%
-          apply(2, function(col) paste(col, collapse = "&"))
-      ) %>% unlist
-      e <- euler(parts[1:7] %>% set_names(combs))$ellipses
-      list(parts = orig_parts,
-           pars = c(e[1,"h"], e[1,"k"], e[2,"h"], e[2,"k"], e[3,"h"], e[3,"k"], e[1,"a"], e[2,"a"],e[3,"a"]))
-    }
-  )
+  venns <- if(method == "mc"){
+    get_venns_2p(parts, npoints=npoints),
+  } else if(method == "polygons"){
+    get_venns_slow(parts, "polygons"),
+  } else if(method == "venneuler"){
+    require(venneuler)
+    combs <- lapply(1:3, function(i)
+      combn(1:3, i) %>%
+        apply(2, function(col) paste(col, collapse = "&"))
+    ) %>% unlist
+    v <- venneuler(combs, parts[1:7])
+    list(parts = parts,
+         pars = c(v$centers %>% apply(1, function(i) list(i)) %>% unlist, v$diameters/2))
+  } else if (method == "eulerr"){
+    require(eulerr)
+    combs <- lapply(1:3, function(i)
+      combn(1:3, i) %>%
+        apply(2, function(col) paste(col, collapse = "&"))
+    ) %>% unlist
+    e <- euler(parts[1:7] %>% set_names(combs))$ellipses
+    list(parts = orig_parts,
+         pars = c(e[1,"h"], e[1,"k"], e[2,"h"], e[2,"k"], e[3,"h"], e[3,"k"], e[1,"a"], e[2,"a"],e[3,"a"]))
+  }
   perc_diff <- round(100*get_areas(venns$pars, method="mc")/sum(venns$parts[1:7]), 2)
   print(paste("Minimized percentual area difference", perc_diff, "%"))
   return(venns)
