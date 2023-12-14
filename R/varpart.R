@@ -301,9 +301,9 @@ get_venns <- function(parts, method=c("eulerr", "mc", "polygons", "venneuler"), 
   if (!is.null(min_share)) parts[parts < min_share] <- min_share
 
   venns <- if(method == "mc"){
-    get_venns_2p(parts, npoints=npoints),
+    get_venns_2p(parts, npoints=npoints)
   } else if(method == "polygons"){
-    get_venns_slow(parts, "polygons"),
+    get_venns_slow(parts, "polygons")
   } else if(method == "venneuler"){
     require(venneuler)
     combs <- lapply(1:3, function(i)
